@@ -2369,38 +2369,19 @@ function liveRouteMap(trip){
 
 function renderDriverLiveMap(trip){
   var acc=isAcceptedByDriver(trip);
-  if(!trip || !acc){
-    return '<div class="locked-map-box"><b>Mapa de ubicación del conductor bloqueado</b><br><small>Se habilita cuando el conductor acepte tu reserva y faltando 20 min o menos para la hora programada (o de inmediato al pedir ahora).</small></div>';
-  }
+  if(!trip||!acc)return '<div class="locked-map-box"><b>Ubicación del conductor aún no disponible</b><br><small>Se habilitará después de que el conductor acepte el servicio y se cumpla la ventana de seguimiento.</small></div>';
   var msUntil=new Date(trip.ts).getTime()-Date.now();
-  var unlocked=isMapUnlockedForTrip(trip);
-  if(!unlocked){
-    var unlockInSec=Math.max(0,Math.floor((msUntil - 20*60*1000)/1000));
-    return '<div class="locked-map-box">'
-      +'<b>Mapa en espera de desbloqueo (20 min antes)</b><br>'
-      +'<small>El conductor aceptó tu reserva. Verás su ubicación real faltando 20 minutos para la hora de recogida (desbloqueo en <b>'+fmtSec(unlockInSec)+'</b>).</small>'
-    +'</div>';
+  if(!isMapUnlockedForTrip(trip)){
+    var unlockInSec=Math.max(0,Math.floor((msUntil-20*60*1000)/1000));
+    return '<div class="locked-map-box"><b>Seguimiento todavía bloqueado</b><br><small>La ubicación se habilitará 20 minutos antes de la recogida (faltan '+fmtSec(unlockInSec)+').</small></div>';
   }
-  var dLoc=getDriverRealLocation();
-  if(!dLoc){
-    return '<div class="locked-map-box"><b>Esperando coordenadas GPS del conductor</b><br><small>La reserva está habilitada; el mapa mostrará la posición cuando el conductor transmita su ubicación real.</small></div>';
-  }
-  var o=(trip.o)||pt("o")||{la:4.711,lo:-74.072,n:"Recogida"};
-  var xd=X(dLoc.lo),yd=Y(dLoc.la),xo=X(o.lo),yo=Y(o.la);
-  var etaMins=driverPickupEtaMinutes(trip,dLoc);
-
-  return '<div class="accepted-box" style="background:#f7fee7;border-color:#bef264;color:#14532d">'
-    +'<div class="row2" style="margin:0"><b>Ubicación del conductor en vivo</b><span class="veh-badge">'+(etaMins!==null?('Llega en ~'+etaMins+' min'):'GPS activo')+'</span></div>'
-    +'<small>GPS real del conductor · Coord: '+dLoc.la.toFixed(4)+', '+dLoc.lo.toFixed(4)+'</small>'
-    +'<svg class="driver-loc-map" viewBox="0 0 300 220" aria-label="Mapa de ubicación del conductor">'
-      +T.map(function(c){return'<circle cx="'+X(c[2])+'" cy="'+Y(c[1])+'" r="2" fill="#94a3b8"/><text x="'+(X(c[2])+3)+'" y="'+(Y(c[1])+2.5)+'" font-size="6.5" fill="#64748b">'+c[0]+'</text>'}).join("")
-      +'<line x1="'+xd+'" y1="'+yd+'" x2="'+xo+'" y2="'+yo+'" stroke="#10b981" stroke-width="3.5" stroke-dasharray="5 3"/>'
-      +'<circle cx="'+xo+'" cy="'+yo+'" r="7.5" fill="#0f172a"/><text x="'+xo+'" y="'+(yo+2.5)+'" font-size="8" text-anchor="middle" fill="#fff" font-weight="800">A</text>'
-      +'<circle cx="'+xd+'" cy="'+yd+'" r="8.5" fill="#84cc16" stroke="#0f172a" stroke-width="2.5"/><text x="'+xd+'" y="'+(yd+3)+'" font-size="8" text-anchor="middle" fill="#0f172a" font-weight="800">🚗</text>'
-    +'</svg>'
-  +'</div>';
+  var loc=getDriverRealLocation();
+  if(!loc)return '<div class="cb-live-map-placeholder"><span class="cb-live-map-symbol">◎</span><b>Esperando GPS real del conductor</b><small>La ubicación aparecerá aquí cuando el dispositivo del conductor la comparta.</small></div>';
+  var lat=Number(loc.la||loc.latitude),lon=Number(loc.lo||loc.longitude);
+  var etaMins=driverPickupEtaMinutes(trip,loc);
+  return '<div class="accepted-box cb-live-map-pending"><div class="row2" style="margin:0"><b>GPS real del conductor</b><span class="veh-badge">'+(etaMins!==null?'Estimado: '+etaMins+' min':'GPS activo')+'</span></div>'
+    +'<div class="cb-live-map-placeholder"><span class="cb-live-map-symbol">◎</span><b>Posición recibida</b><small>Coordenadas GPS: '+lat.toFixed(5)+', '+lon.toFixed(5)+'</small></div></div>';
 }
-
 function activeReservationManagementBox(){
   var t=activeTrip();
   if(!t)return "";
