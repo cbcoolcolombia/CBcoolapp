@@ -2173,13 +2173,14 @@ function bindRequestSlider(){
   var thumb = $("#slide-thumb");
   if(!track || !thumb)return;
   var dragging = false;
+  var activePointer = null;
   var grabOffset = 0;
   var curOffset = 0;
 
   function limits(){
     var half = thumb.offsetWidth/2 || 24;
     var center = track.clientWidth/2;
-    return {min:half-center,max:track.clientWidth-half-center,half:half,center:center};
+    return {min:half-center,max:track.clientWidth-half,center:center};
   }
 
   function paint(offset){
@@ -2189,18 +2190,18 @@ function bindRequestSlider(){
   }
 
   function onDown(e){
-    if(dragging)return;
+    if(dragging || (e.pointerType==="mouse" && e.button!==0))return;
     e.preventDefault();
-    var tr = track.getBoundingClientRect();
     var th = thumb.getBoundingClientRect();
     dragging = true;
+    activePointer = e.pointerId;
     grabOffset = e.clientX - (th.left + th.width/2);
     thumb.classList.add("dragging");
     try{thumb.setPointerCapture(e.pointerId)}catch(err){}
   }
 
   function onMove(e){
-    if(!dragging)return;
+    if(!dragging || e.pointerId!==activePointer)return;
     e.preventDefault();
     var tr = track.getBoundingClientRect();
     var lim = limits();
@@ -2208,27 +2209,28 @@ function bindRequestSlider(){
     paint(desiredCenter - lim.center);
   }
 
-  function onUp(e){
-    if(!dragging)return;
+  function finishDrag(e){
+    if(!dragging || (e && e.pointerId!==activePointer))return;
     dragging = false;
+    activePointer = null;
     thumb.classList.remove("dragging");
     var lim = limits();
-    // Basta llegar al 78% del recorrido para completar la acción.
-    if(curOffset >= lim.max*0.78){
+    // Umbral más sensible: basta recorrer el 50% para confirmar.
+    if(curOffset >= lim.max*0.50){
       if(isDebtBlocked()){paint(0);return;}
       decidePendingRequest(true);
-    }else if(curOffset <= lim.min*0.78){
+    }else if(curOffset <= lim.min*0.50){
       decidePendingRequest(false);
     }
-    // Si no llegó al umbral, conserva exactamente la posición alcanzada.
+    // Nunca recentrar mientras el dedo está apoyado; si se suelta antes
+    // del umbral, el círculo queda donde terminó y puede seguirse desde allí.
   }
 
   thumb.addEventListener("pointerdown",onDown);
   thumb.addEventListener("pointermove",onMove);
-  thumb.addEventListener("pointerup",onUp);
-  thumb.addEventListener("pointercancel",onUp);
-}
-function trafficInfo(t){
+  thumb.addEventListener("pointerup",finishDrag);
+  thumb.addEventListener("pointercancel",finishDrag);
+}function trafficInfo(t){
   var km = (t && t.km) || 10;
   var seed = t ? (((t.id || 1)*5 + Math.round(km))%3) : (new Date().getMinutes()%3);
   if(seed === 0)return{level:"Fluido",cls:"tr-fluido",factor:1.0,desc:"Sin congestiones relevantes en la vía."};
