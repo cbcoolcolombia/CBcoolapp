@@ -574,16 +574,21 @@ button.secondary,.btn-secondary,.cb-secondary{border-radius:16px!important}input
   background:#e5e7eb!important;
   border-color:#cbd5e1!important;
 }
-.req-card .slide-lbl-l{color:#b42318!important;text-shadow:0 1px 1px #fff;font-weight:900!important}
-.req-card .slide-lbl-r{color:#166534!important;text-shadow:0 1px 1px #fff;font-weight:900!important}
+.req-card .slide-lbl-l{color:#b42318!important;text-shadow:none!important;font-weight:900!important}
+.req-card .slide-lbl-r{color:#166534!important;text-shadow:none!important;font-weight:900!important}
 .req-card.pedir-ya-card .slide-lbl-r{color:#14532d!important}
-.req-card .slide-thumb{
-  background:#111820!important;color:#fff!important;
-  border:2px solid #fff!important;box-sizing:border-box;
+.req-card .slide-thumb,
+.req-card.pedir-ya-card .slide-thumb,
+.req-card .slide-thumb.accept,
+.req-card .slide-thumb.reject{
+  width:48px!important;height:48px!important;line-height:48px!important;
+  margin-left:-24px!important;top:4px!important;left:50%!important;
+  background:#202a35!important;color:#fff!important;
+  border:0!important;box-shadow:none!important;
+  outline:0!important;transition:none!important;
+  border-radius:50%!important;touch-action:none!important;
 }
-.req-card.pedir-ya-card .slide-thumb{background:#111820!important}
-.req-card .slide-thumb.accept{background:#166534!important}
-.req-card .slide-thumb.reject{background:#b42318!important}
+.req-card .slide-thumb.dragging{cursor:grabbing!important}
 </style>
 </head><body>
 
@@ -2168,59 +2173,61 @@ function bindRequestSlider(){
   var thumb = $("#slide-thumb");
   if(!track || !thumb)return;
   var dragging = false;
-  var startX = 0;
+  var grabOffset = 0;
   var curOffset = 0;
 
-  function maxTravel(){
-    return Math.max(55,(track.clientWidth/2) - 28);
+  function limits(){
+    var half = thumb.offsetWidth/2 || 24;
+    var center = track.clientWidth/2;
+    return {min:half-center,max:track.clientWidth-half-center,half:half,center:center};
   }
 
-  function setOffset(dx){
-    var limit = maxTravel();
-    curOffset = Math.max(-limit,Math.min(limit,dx));
-    thumb.style.transform = "translateX("+curOffset.toFixed(1)+"px)";
-    thumb.classList.remove("accept","reject");
-    if(curOffset > limit*0.35 && !isDebtBlocked())thumb.classList.add("accept");
-    else if(curOffset < -limit*0.35)thumb.classList.add("reject");
+  function paint(offset){
+    var lim = limits();
+    curOffset = Math.max(lim.min,Math.min(lim.max,offset));
+    thumb.style.transform = "translate3d("+curOffset.toFixed(1)+"px,0,0)";
   }
 
   function onDown(e){
-    if(e.cancelable)e.preventDefault();
+    if(dragging)return;
+    e.preventDefault();
+    var tr = track.getBoundingClientRect();
+    var th = thumb.getBoundingClientRect();
     dragging = true;
+    grabOffset = e.clientX - (th.left + th.width/2);
     thumb.classList.add("dragging");
-    startX = (e.touches ? e.touches[0].clientX : e.clientX) - curOffset;
+    try{thumb.setPointerCapture(e.pointerId)}catch(err){}
   }
 
   function onMove(e){
     if(!dragging)return;
-    if(e.cancelable)e.preventDefault();
-    var x = e.touches ? e.touches[0].clientX : e.clientX;
-    setOffset(x - startX);
+    e.preventDefault();
+    var tr = track.getBoundingClientRect();
+    var lim = limits();
+    var desiredCenter = e.clientX - tr.left - grabOffset;
+    paint(desiredCenter - lim.center);
   }
 
-  function onUp(){
+  function onUp(e){
     if(!dragging)return;
     dragging = false;
     thumb.classList.remove("dragging");
-    var limit = maxTravel();
-    // Conserva la posición intermedia: el conductor puede soltar y continuar
-    // arrastrando desde ahí. Solo ejecuta la acción al llegar casi al extremo.
-    if(curOffset >= limit*0.94){
-      if(isDebtBlocked()){setOffset(0);return;}
+    var lim = limits();
+    // Basta llegar al 78% del recorrido para completar la acción.
+    if(curOffset >= lim.max*0.78){
+      if(isDebtBlocked()){paint(0);return;}
       decidePendingRequest(true);
-    }else if(curOffset <= -limit*0.94){
+    }else if(curOffset <= lim.min*0.78){
       decidePendingRequest(false);
     }
+    // Si no llegó al umbral, conserva exactamente la posición alcanzada.
   }
 
-  thumb.addEventListener("mousedown",onDown);
-  window.addEventListener("mousemove",onMove);
-  window.addEventListener("mouseup",onUp);
-  thumb.addEventListener("touchstart",onDown,{passive:false});
-  window.addEventListener("touchmove",onMove,{passive:false});
-  window.addEventListener("touchend",onUp);
+  thumb.addEventListener("pointerdown",onDown);
+  thumb.addEventListener("pointermove",onMove);
+  thumb.addEventListener("pointerup",onUp);
+  thumb.addEventListener("pointercancel",onUp);
 }
-
 function trafficInfo(t){
   var km = (t && t.km) || 10;
   var seed = t ? (((t.id || 1)*5 + Math.round(km))%3) : (new Date().getMinutes()%3);
