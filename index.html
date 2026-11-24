@@ -2597,6 +2597,7 @@ function pickUI(k){
 }
 
 window.onPedirYaClick=function(){
+  if(window.CBcoolGate&&!window.CBcoolGate.isApproved())return toast("Tu cuenta está pendiente de aprobación. Puedes explorar la app, pero aún no solicitar viajes.");
   S.requestMode="now";
   S.f.ts=0;
   if(!readyFn()){
@@ -2607,6 +2608,7 @@ window.onPedirYaClick=function(){
 };
 
 window.onReservarHoraClick=function(){
+  if(window.CBcoolGate&&!window.CBcoolGate.isApproved())return toast("Tu cuenta está pendiente de aprobación. Aún no puedes reservar viajes.");
   if(S.requestMode!=="reserve"){
     S.requestMode="reserve";
     render();
@@ -2628,7 +2630,6 @@ window.onReservarHoraClick=function(){
 };
 
 function bookF(){
-  if(window.CBcoolGate && !window.CBcoolGate.isApproved()){toast("Tu cuenta debe ser aprobada antes de solicitar viajes.");return;}
   var sel=getSelectedDriver();
   var isNow=isPedirYaMode();
   var rate=+((sel&&sel.rate)||S.d.rate||0);
