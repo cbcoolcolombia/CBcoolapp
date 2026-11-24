@@ -2658,12 +2658,11 @@ function bookF(){
 
   var activeNowPending=S.trips.find(function(x){return x.pedidoAhora && !isAcceptedByDriver(x) && x.st!=="cancelado" && x.st!=="finalizado"});
 
-  return paxHeaderCard()
-  +driverCancelBannerHtml()
+  return driverCancelBannerHtml()
   +orderNowAcceptedNotificationCard()
   +(activeNowPending?pedirYaOffersCard(activeNowPending):"")
   +activeReservationManagementBox()
-  +'<div class="rh"><div class="map-top"><div class="map-win" id="mapwin">'+mapSvg()+'</div>'
+  +'<div class="rh cb-rj-home"><div class="cb-rj-topbar"><button type="button" class="cb-rj-menu" onclick="S.sub=\'me\';render()" aria-label="Abrir perfil">☰</button><div class="cb-rj-brand">CBcool <span>Pasajero</span></div><span class="cb-rj-live" id="js-st">En línea</span></div><div class="map-top"><div class="map-win" id="mapwin">'+mapSvg()+'</div>'
     +'<button type="button" class="locate" onclick="gps()" aria-label="Localizar mi ubicación actual" title="Mi ubicación actual"></button></div>'
     +'<div class="sheet"><div class="grab"></div><h3 class="where">¿A dónde vas?</h3>'
     +'<div class="route"><div class="rt-row"><i class="dot a"></i><div class="rt-f"><select onchange="sv(\'om\',this.value,1)">'+opt(S.f.om)+'</select>'
@@ -3403,5 +3402,36 @@ main{max-width:720px!important;margin:0 auto!important;padding:18px 18px 110px!i
 }
 @media(prefers-reduced-motion:reduce){#cbcool-gate *,#app *{transition:none!important;animation:none!important}}
 </style>
+
+<style id="cbcool-rutajusta-home-v1">
+/* CBcool: composición de inicio basada en la interfaz Ruta Justa proporcionada; mapa solo reservado, sin simulaciones */
+@media (max-width: 900px){
+ body:has(#app .cb-rj-home) header#top-hdr{display:none!important}
+}
+#app .rh.cb-rj-home{position:relative!important;height:calc(100dvh - 126px)!important;min-height:590px!important;margin:-18px -18px -110px!important;overflow:hidden!important;background:#eef1f2!important;border-radius:0!important}
+#app .cb-rj-home .map-top{position:absolute!important;inset:0!important;height:100%!important;z-index:0!important}
+#app .cb-rj-home .map-win{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;border:0!important;border-radius:0!important;background:#edf0f1!important}
+#app .cb-rj-home .cb-map-placeholder{height:100%!important;min-height:100%!important;border:0!important;border-radius:0!important;background:linear-gradient(145deg,#e9edef,#f5f6f6)!important}
+#app .cb-rj-home .cb-map-placeholder-grid{opacity:.22!important}
+#app .cb-rj-home .cb-rj-topbar{position:absolute!important;z-index:8!important;top:14px!important;left:15px!important;right:15px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;pointer-events:none!important}
+#app .cb-rj-home .cb-rj-topbar>*{pointer-events:auto!important}
+#app .cb-rj-home .cb-rj-menu{width:48px!important;min-width:48px!important;height:48px!important;min-height:48px!important;padding:0!important;border:0!important;border-radius:50%!important;background:#fff!important;color:#111!important;box-shadow:0 3px 15px #00000018!important;font-size:22px!important}
+#app .cb-rj-home .cb-rj-brand{background:#fff!important;color:#111!important;border-radius:24px!important;padding:12px 16px!important;font-size:15px!important;font-weight:850!important;box-shadow:0 3px 15px #00000012!important;margin-left:auto!important}
+#app .cb-rj-home .cb-rj-brand span{color:#777!important;font-size:11px!important;font-weight:650!important;margin-left:4px!important}
+#app .cb-rj-home .cb-rj-live{background:#111!important;color:#fff!important;border-radius:24px!important;padding:10px 13px!important;font-size:10px!important;font-weight:750!important;white-space:nowrap!important}
+#app .cb-rj-home .sheet{position:absolute!important;z-index:6!important;left:10px!important;right:10px!important;bottom:10px!important;margin:0!important;max-height:72%!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:12px 16px calc(18px + env(safe-area-inset-bottom,0px))!important;border:0!important;border-radius:25px!important;background:#fff!important;box-shadow:0 8px 35px #00000018!important}
+#app .cb-rj-home .grab{width:42px!important;height:5px!important;margin:0 auto 12px!important;background:#d7dadd!important}
+#app .cb-rj-home .where{font-size:25px!important;font-weight:850!important;letter-spacing:-.8px!important;margin:0 0 12px!important;color:#111!important}
+#app .cb-rj-home .route{background:#f5f5f5!important;border-radius:17px!important;padding:8px 12px 8px 40px!important}
+#app .cb-rj-home .rt-f select{font-size:14px!important;font-weight:800!important}
+#app .cb-rj-home .rt-f input{background:#fff!important;border-radius:11px!important}
+#app .cb-rj-home .cta-sticky{position:sticky!important;bottom:0!important;z-index:4!important;background:#fff!important;padding-top:10px!important;box-shadow:0 -8px 18px #fff!important}
+#app .cb-rj-home .cta-main{min-height:52px!important;border-radius:16px!important;font-size:14px!important}
+#app .cb-rj-home .locate{top:76px!important;bottom:auto!important;right:16px!important}
+#app .cb-rj-home .map-fab{top:78px!important}
+@media(max-height:700px){#app .rh.cb-rj-home{height:calc(100dvh - 112px)!important;min-height:520px!important}#app .cb-rj-home .sheet{max-height:68%!important}}
+@media(min-width:901px){#app .rh.cb-rj-home{height:calc(100vh - 180px)!important;min-height:650px!important;margin:0 -18px -110px!important;border-radius:22px!important}#app .cb-rj-home .map-win{border-radius:22px!important}}
+</style>
+
 </body></html>
 
